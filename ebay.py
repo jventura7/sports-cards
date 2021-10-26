@@ -168,16 +168,14 @@ def auto_crop_images():
                 print("{}/{}".format(counter, n))
             
             # Get grade, and skip if not a legal grade.
-            print("fname: " + fname)
             grade = fname.split("_")[1]
-            print("grade: " + grade)
             legal_grades = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
             if grade not in legal_grades: # not expected to occur...just for safety.
                 continue 
             
             # Load image as numpy array.
             #p = os.path.join("imgs", fname)
-            img = Image.open(fname)
+            img = Image.open("/Users/vrajpatel/Desktop/SportsCardGrading/page_jsons1/imgs/" + fname)
             img = np.array(img)
             
             # Crop, removing top 1/3.
@@ -185,7 +183,7 @@ def auto_crop_images():
             new_top = int(height/3)
             cropped = img[new_top:, :, :]
 
-            of_p = os.path.join("cropped_imgs", fname)
+            of_p = os.path.join("/Users/vrajpatel/Desktop/SportsCardGrading/page_jsons1/imgs/cropped_imgs", fname)
             PIL_img = Image.fromarray(cropped)
             PIL_img.save(of_p)
             
