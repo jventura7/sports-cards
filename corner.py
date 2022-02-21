@@ -4,25 +4,21 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from PIL import Image
+import math
 
 
-pull_img = "image5.png"
-new_img = "resized_image5.png"
+pull_img = "image1.png"
+new_img = "resized_image1.png"
 
 image = Image.open(pull_img)
 resized_img = image.resize((2000, 1000))
 resized_img.save(new_img)
 
-# Read image and perform Canny Edge Detection
 img = cv2.imread(new_img, 0)
-'''
 black_img = np.zeros(img.shape)
-edges = cv2.Canny(img, 100, 120)
-img = cv2.imread('image1.png', 0)
-'''
-black_img = np.zeros(img.shape)
-edges = cv2.Canny(img, 100, 150)
-lines = cv2.HoughLines(edges, rho=1, theta=np.pi/180, threshold=100)
+median = np.median(img)
+edges = cv2.Canny(img, 2*median, 2.5*median)
+lines = cv2.HoughLines(edges, rho=1, theta=np.pi/180, threshold=300) 
 N = lines.shape[0]
 
 horizontal_lines = []
@@ -89,111 +85,184 @@ ax2.set_title('Corner Detection')
 ax2.set_axis_off()
 #fig2.savefig('houghlines.png')
 
+left_x = (vertical_lines[0][0][0] + vertical_lines[1][0][0]) // 2
+right_x = (vertical_lines[2][0][0] + vertical_lines[3][0][0]) // 2
+
+top_y = (horizontal_lines[0][0][0] + horizontal_lines[1][0][0]) // 2
+bottom_y = (horizontal_lines[2][0][0] + horizontal_lines[3][0][0]) // 2
+
 '''
 print("Vertical Line 1 (x-coordinate): " + str(vertical_lines[0][0][0]))
 print("Vertical Line 2 (x-coordinate): " + str(vertical_lines[1][0][0]))
 print("Vertical Line 3 (x-coordinate): " + str(vertical_lines[2][0][0]))
 print("Vertical Line 4 (x-coordinate): " + str(vertical_lines[3][0][0]))
-
 print() 
-
 print("Horizontal Line 1 (y-coordinate): " + str(horizontal_lines[0][0][0]))
 print("Horizontal Line 2 (y-coordinate): " + str(horizontal_lines[1][0][0]))
 print("Horizontal Line 3 (y-coordinate): " + str(horizontal_lines[2][0][0]))
 print("Horizontal Line 4 (y-coordinate): " + str(horizontal_lines[3][0][0]))
-
 print()
-'''
 print("Top left corner: (" + str(vertical_lines[0][0][0]) + ", " + str(horizontal_lines[0][0][0]) + ")")
 print("Bottom left corner: (" + str(vertical_lines[0][0][0]) + ", " + str(horizontal_lines[3][0][0]) + ")")
 print("Top right corner: (" + str(vertical_lines[3][0][0]) + ", " + str(horizontal_lines[0][0][0]) + ")")
 print("Bottom right corner: (" + str(vertical_lines[3][0][0]) + ", " + str(horizontal_lines[3][0][0]) + ")")
-
 print()
-
-left_x = (vertical_lines[0][0][0] + vertical_lines[1][0][0]) / 2
-right_x = (vertical_lines[2][0][0] + vertical_lines[3][0][0]) / 2
-
-top_y = (horizontal_lines[0][0][0] + horizontal_lines[1][0][0]) / 2
-bottom_y = (horizontal_lines[2][0][0] + horizontal_lines[3][0][0]) / 2
-
 print("Top left center point: (" + str(left_x) + ", " + str(top_y) + ")")
 print("Bottom left center point: (" + str(left_x) + ", " + str(bottom_y) + ")")
 print("Top right center point: (" + str(right_x) + ", " + str(top_y) + ")")
 print("Bottom right center point: (" + str(right_x) + ", " + str(bottom_y) + ")")
-
+'''
 
 ax2.add_patch(patches.Rectangle((left_x, top_y), vertical_lines[0][0][0] - left_x, horizontal_lines[0][0][0] - top_y, linewidth=1, edgecolor='r', facecolor='none'))
 ax2.add_patch(patches.Rectangle((left_x, bottom_y), vertical_lines[0][0][0] - left_x, horizontal_lines[3][0][0] - bottom_y, linewidth=1, edgecolor='r', facecolor='none'))
 ax2.add_patch(patches.Rectangle((right_x, top_y), vertical_lines[3][0][0] - right_x, horizontal_lines[0][0][0] - top_y, linewidth=1, edgecolor='r', facecolor='none'))
 ax2.add_patch(patches.Rectangle((right_x, bottom_y), vertical_lines[3][0][0] - right_x, horizontal_lines[3][0][0] - bottom_y, linewidth=1, edgecolor='r', facecolor='none'))
-
 plt.show()
 
-'''import cv2
-import numpy as np
-import matplotlib.pyplot as plt
+corner1 = img[int(horizontal_lines[0][0][0]):int(top_y) , int(vertical_lines[0][0][0]):int(left_x)]
+corner2 = img[int(bottom_y):int(horizontal_lines[3][0][0]) , int(vertical_lines[0][0][0]):int(left_x)]
+corner3 = img[int(horizontal_lines[0][0][0]):int(top_y) , int(right_x):int(vertical_lines[3][0][0])]
+corner4 = img[int(bottom_y):int(horizontal_lines[3][0][0]) , int(right_x):int(vertical_lines[3][0][0])]
 
-def shi_tomashi(image):
-    """
-    Use Shi-Tomashi algorithm to detect corners
-    Args:
-        image: np.array
-    Returns:
-        corners: list
-    """
-    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    corners = cv2.goodFeaturesToTrack(gray, 4, 0.01, 100)
-    corners = np.int0(corners)
-    corners = sorted(np.concatenate(corners).tolist())
-    print('\nThe corner points are...\n')
+ret1, otsu1 = cv2.threshold(corner1,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+ret2, otsu2 = cv2.threshold(corner2,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+ret3, otsu3 = cv2.threshold(corner3,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+ret4, otsu4 = cv2.threshold(corner4,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
-    im = image.copy()
-    for index, c in enumerate(corners):
-        x, y = c
-        cv2.circle(im, (x, y), 3, 255, -1)
-        character = chr(65 + index)
-        print(character, ':', c)
-        cv2.putText(im, character, tuple(c), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_AA)
+horiStack1 = np.hstack((corner1, corner3))
+horiStack2 = np.hstack((corner2, corner4))
+stack = np.vstack((horiStack1, horiStack2))
 
-    plt.figure(1)
-    plt.imshow(im)
-    plt.title('Corner Detection: Shi-Tomashi')
-    plt.show()
-    return corners
+horiOtsuStack1 = np.hstack((otsu1, otsu3))
+horiOtsuStack2 = np.hstack((otsu2, otsu4))
+stackOtsu = np.vstack((horiOtsuStack1, horiOtsuStack2))
 
-img_name = "image4.png"
+cornerPixels1 = []
+cornerPixels2 = []
+cornerPixels3 = []
+cornerPixels4 = []
 
-# Load image, convert to grayscale, and find edges
-image = cv2.imread(img_name)
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)[1]
+#multiply the otsu threshold by 0.8
 
-# Find contour and sort by contour area
-cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-cnts = sorted(cnts, key=cv2.contourArea, reverse=True)
 
-# Find bounding box and extract ROI
-ROI = image
-for c in cnts:
-    x,y,w,h = cv2.boundingRect(c)
-    ROI = image
-    ROI[y:y+h, x:x+w] = 0
-    #ROI = image[y-50:y+h+50, x-50:x+w+50]
-    break
-ROI[ROI != 0] = 255
+for i in range(len(otsu1)):
+    for j in range(len(otsu1[i])):
+        if otsu1[i][j] == 255:
+            cornerPixels1.append(corner1[i][j])
+            
+for i in range(len(otsu2)):
+    for j in range(len(otsu2[i])):
+        if otsu2[i][j] == 255:
+            cornerPixels2.append(corner2[i][j])
+            
+for i in range(len(otsu3)):
+    for j in range(len(otsu3[i])):
+        if otsu3[i][j] == 255:
+            cornerPixels3.append(corner3[i][j])
+            
+for i in range(len(otsu4)):
+    for j in range(len(otsu4[i])):
+        if otsu4[i][j] == 255:
+            cornerPixels4.append(corner4[i][j])
+            
+Pixels1 = np.array(cornerPixels1)
+Pixels2 = np.array(cornerPixels2)
+Pixels3 = np.array(cornerPixels3)
+Pixels4 = np.array(cornerPixels4)
 
-output = shi_tomashi(ROI)
+print("CORNERS DETECTED USING HOUGH TRANSFORM TECHNIQUE")
+print("Top Left Corner:\t\t", "Average: ", str("{:.2f}".format(np.mean(corner1))), "\t", "Standard Deviation: ",  str("{:.2f}".format(np.std(corner1))), "\t", "Variance: ", str("{:.2f}".format(np.var(corner1))))
+#print("Min: " + str(np.min(corner1)))
+#print("Max: " + str(np.max(corner1)))
+#print("Average: " + str(np.mean(corner1)))
+#print("Standard Deviation: " + str(np.std(corner1)))
+#print("Variance: " + str(np.var(corner1)))
 
-corners = cv2.imread(img_name)#[y-25:y+h+25, x-25:x+w+25]
-cv2.rectangle(corners, (output[0][0], output[0][1]), (output[0][0] + 50, output[0][1] + 50), (255,0,0), 5)
-cv2.rectangle(corners, (output[1][0], output[1][1]), (output[1][0] + 50, output[1][1] - 50), (255,0,0), 5)
-cv2.rectangle(corners, (output[2][0], output[2][1]), (output[2][0] - 50, output[2][1] + 50), (255,0,0), 5)
-cv2.rectangle(corners, (output[3][0], output[3][1]), (output[3][0] - 50, output[3][1] - 50), (255,0,0), 5)
+#print()
+print("Bottom Left Corner:\t\t" , "Average: ", str("{:.2f}".format(np.mean(corner2))), "\t", "Standard Deviation: ",  str("{:.2f}".format(np.std(corner2))), "\t", "Variance: ", str("{:.2f}".format(np.var(corner2))))
+#print("Min: " + str(np.min(corner2)))
+#print("Max: " + str(np.max(corner2)))
+#print("Average: " + str(np.mean(corner2)))
+#print("Standard Deviation: " + str(np.std(corner2)))
+#print("Variance: " + str(np.var(corner2)))
 
-plt.figure(1)
-plt.imshow(corners)
-plt.title('Corner Detection: Shi-Tomashi')
-plt.show()
+#print()
+print("Top Right Corner:\t\t", "Average: ", str("{:.2f}".format(np.mean(corner3))), "\t", "Standard Deviation: ",  str("{:.2f}".format(np.std(corner3))), "\t", "Variance: ", str("{:.2f}".format(np.var(corner3))))
+#print("Min: " + str(np.min(corner3)))
+#print("Max: " + str(np.max(corner3)))
+#print("Average: " + str(np.mean(corner3)))
+#print("Standard Deviation: " + str(np.std(corner3)))
+#print("Variance: " + str(np.var(corner3)))
+
+#print()
+print("Bottom Right Corner:\t", "Average: ", str("{:.2f}".format(np.mean(corner4))), "\t", "Standard Deviation: ",  str("{:.2f}".format(np.std(corner4))), "\t", "Variance: ", str("{:.2f}".format(np.var(corner4))))
+#print("Min: " + str(np.min(corner4)))
+#print("Max: " + str(np.max(corner4)))
+#print("Average: " + str(np.mean(corner4)))
+#print("Standard Deviation: " + str(np.std(corner4)))
+#print("Variance: " + str(np.var(corner4)))     
+
+print("\nBELOW ARE CORNERS USING OTSU METHOD")
+print("Top Left Corner:\t\t", "Average: ", str("{:.2f}".format(np.mean(cornerPixels1))), "\t", "Standard Deviation: ",  str("{:.2f}".format(np.std(cornerPixels1))), "\t", "Variance: ", str("{:.2f}".format(np.var(cornerPixels1))))
+#print("Min: " + str(np.min(cornerPixels1)))
+#print("Max: " + str(np.max(cornerPixels1)))
+#print("Average: " + str(np.mean(cornerPixels1)))
+#print("Standard Deviation: " + str(np.std(cornerPixels1)))
+#print("Variance: " + str(np.var(cornerPixels1)))
+
+print("Bottom Left Corner:\t\t", "Average: ", str("{:.2f}".format(np.mean(cornerPixels2))), "\t", "Standard Deviation: ",  str("{:.2f}".format(np.std(cornerPixels2))), "\t", "Variance: ", str("{:.2f}".format(np.var(cornerPixels2))))
+#print("Min: " + str(np.min(cornerPixels2)))
+#print("Max: " + str(np.max(cornerPixels2)))
+#print("Average: " + str(np.mean(cornerPixels2)))
+#print("Standard Deviation: " + str(np.std(cornerPixels2)))
+#print("Variance: " + str(np.var(cornerPixels2)))
+
+print("Top Right Corner:\t\t", "Average: ", str("{:.2f}".format(np.mean(cornerPixels3))), "\t", "Standard Deviation: ",  str("{:.2f}".format(np.std(cornerPixels3))), "\t", "Variance: ", str("{:.2f}".format(np.var(cornerPixels3))))
+#print("Min: " + str(np.min(cornerPixels3)))
+#print("Max: " + str(np.max(cornerPixels3)))
+#print("Average: " + str(np.mean(cornerPixels3)))
+#print("Standard Deviation: " + str(np.std(cornerPixels3)))
+#print("Variance: " + str(np.var(cornerPixels3)))
+
+print("Bottom Right Corner:\t", "Average: ", str("{:.2f}".format(np.mean(cornerPixels4))), "\t", "Standard Deviation: ",  str("{:.2f}".format(np.std(cornerPixels4))), "\t", "Variance: ", str("{:.2f}".format(np.var(cornerPixels4))))
+#print("Min: " + str(np.min(cornerPixels4)))
+#print("Max: " + str(np.max(cornerPixels4)))
+#print("Average: " + str(np.mean(cornerPixels4)))
+#print("Standard Deviation: " + str(np.std(cornerPixels4)))
+#print("Variance: " + str(np.var(cornerPixels4)))
 '''
+lines = cv2.HoughLines(corner1, 1, math.pi/2, 2, None, 30, 1);
+for line in lines:
+    pt1 = (line[0],line[1])
+    pt2 = (line[2],line[3])
+    cv2.line(img, pt1, pt2, (0,0,255), 3)
+'''
+'''
+print(type(img))
+print(img)
+cornerPixel1 = np.array(cornerPixels1)
+print(type(Pixels1))
+print(Pixels1)
+
+lines = cv2.HoughLinesP(otsu1, 1, np.pi/180, 30, maxLineGap=250)
+for line in lines:
+   x1, y1, x2, y2 = line[0]
+   cv2.line(otsu1, (x1, y1), (x2, y2), (255, 0, 0), 2)
+
+cv2.imshow("corner1", corner1)
+cv2.imshow("corner2", corner2)
+cv2.imshow("corner3", corner3)
+cv2.imshow("corner4", corner4)
+
+cv2.imshow("otsu corner1: " , otsu1)
+cv2.imshow("otsu corner2 otsu: " , otsu2)
+cv2.imshow("otsu corner3 otsu: " , otsu3)
+cv2.imshow("otsu corner4 otsu: " , otsu4)
+
+
+cv2.imshow("pixels1", otsu1)
+cv2.imshow("Corners", stack)
+cv2.imshow("Otsu Corners", stackOtsu)
+
+'''
+cv2.waitKey(0)
