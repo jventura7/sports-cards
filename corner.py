@@ -179,7 +179,7 @@ print("Top Left Corner:\t\t", "Average: ", str("{:.2f}".format(np.mean(corner1))
 #print("Variance: " + str(np.var(corner1)))
 
 #print()
-print("Bottom Left Corner:\t\t" , "Average: ", str("{:.2f}".format(np.mean(corner2))), "\t", "Standard Deviation: ",  str("{:.2f}".format(np.std(corner2))), "\t", "Variance: ", str("{:.2f}".format(np.var(corner2))))
+print("Bottom Left Corner:\t" , "Average: ", str("{:.2f}".format(np.mean(corner2))), "\t", "Standard Deviation: ",  str("{:.2f}".format(np.std(corner2))), "\t", "Variance: ", str("{:.2f}".format(np.var(corner2))))
 #print("Min: " + str(np.min(corner2)))
 #print("Max: " + str(np.max(corner2)))
 #print("Average: " + str(np.mean(corner2)))
@@ -210,7 +210,7 @@ print("Top Left Corner:\t\t", "Average: ", str("{:.2f}".format(np.mean(cornerPix
 #print("Standard Deviation: " + str(np.std(cornerPixels1)))
 #print("Variance: " + str(np.var(cornerPixels1)))
 
-print("Bottom Left Corner:\t\t", "Average: ", str("{:.2f}".format(np.mean(cornerPixels2))), "\t", "Standard Deviation: ",  str("{:.2f}".format(np.std(cornerPixels2))), "\t", "Variance: ", str("{:.2f}".format(np.var(cornerPixels2))))
+print("Bottom Left Corner:\t", "Average: ", str("{:.2f}".format(np.mean(cornerPixels2))), "\t", "Standard Deviation: ",  str("{:.2f}".format(np.std(cornerPixels2))), "\t", "Variance: ", str("{:.2f}".format(np.var(cornerPixels2))))
 #print("Min: " + str(np.min(cornerPixels2)))
 #print("Max: " + str(np.max(cornerPixels2)))
 #print("Average: " + str(np.mean(cornerPixels2)))
@@ -237,32 +237,164 @@ for line in lines:
     pt2 = (line[2],line[3])
     cv2.line(img, pt1, pt2, (0,0,255), 3)
 '''
-'''
-print(type(img))
-print(img)
-cornerPixel1 = np.array(cornerPixels1)
-print(type(Pixels1))
-print(Pixels1)
 
-lines = cv2.HoughLinesP(otsu1, 1, np.pi/180, 30, maxLineGap=250)
-for line in lines:
-   x1, y1, x2, y2 = line[0]
-   cv2.line(otsu1, (x1, y1), (x2, y2), (255, 0, 0), 2)
+lines = cv2.HoughLines(otsu1, rho=1, theta=np.pi/180, threshold=10) 
+
+horizontal_lines1 = []
+vertical_lines1 = []
+for i in range(lines.shape[0]):
+    rho = lines[i][0][0]
+    theta = lines[i][0][1]
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    x1 = int(x0 + 1000 * (-b)) - 2
+    y1 = int(y0 + 1000 * a) - 2
+    x2 = int(x0 - 1000 * (-b)) - 2
+    y2 = int(y0 - 1000 * a) - 2
+    #print(theta)
+    if theta <= 0.1:
+        vertical_lines1.append([x1, y1, x2, y2, rho])
+    if theta >= 1.5 and theta <= 1.72:
+        horizontal_lines1.append([x1, y1, x2, y2, rho])
+        
+horizontal_lines1.sort(key=lambda x: x[-1])
+horizontal_lines1 = horizontal_lines1[:1]
+vertical_lines1.sort(key=lambda x: x[-1])
+vertical_lines1 = vertical_lines1[:1]
+
+#print(horizontal_lines1[0])
+#print(vertical_lines1[0])
+
+cv2.line(corner1, (horizontal_lines1[0][0], horizontal_lines1[0][1]), (horizontal_lines1[0][2], horizontal_lines1[0][3]), color=(0,255,0), thickness=1)
+cv2.line(corner1, (vertical_lines1[0][0], vertical_lines1[0][1]), (vertical_lines1[0][2], vertical_lines1[0][3]), color=(0,255,0), thickness=1)
+
+cv2.line(otsu1, (horizontal_lines1[0][0], horizontal_lines1[0][1]), (horizontal_lines1[0][2], horizontal_lines1[0][3]), (255,0,0), 1)
+cv2.line(otsu1, (vertical_lines1[0][0], vertical_lines1[0][1]), (vertical_lines1[0][2], vertical_lines1[0][3]), (255,0,0), 1)
+
+lines = cv2.HoughLines(otsu2, rho=1, theta=np.pi/180, threshold=10) 
+
+horizontal_lines2 = []
+vertical_lines2 = []
+for i in range(lines.shape[0]):
+    rho = lines[i][0][0]
+    theta = lines[i][0][1]
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    x1 = int(x0 + 5000 * (-b)) - 2
+    y1 = int(y0 + 5000 * a) + 2
+    x2 = int(x0 - 5000 * (-b)) - 2
+    y2 = int(y0 - 5000 * a) + 2
+    #print(theta)
+    if theta <= 0.1:
+        vertical_lines2.append([x1, y1, x2, y2, rho])
+    if theta >= 1.5 and theta <= 1.72:
+        horizontal_lines2.append([x1, y1, x2, y2, rho])
+        
+horizontal_lines2.sort(key=lambda x: x[-1])
+horizontal_lines2 = horizontal_lines2[-1:]
+vertical_lines2.sort(key=lambda x: x[-1])
+vertical_lines2 = vertical_lines2[:1]
+#print("horizontal : ", horizontal_lines2[0])
+#print("vertical : ", vertical_lines2[0])
+
+cv2.line(corner2, (horizontal_lines2[0][0], horizontal_lines2[0][1]), (horizontal_lines2[0][2], horizontal_lines2[0][3]), color=(0,255,0), thickness=1)
+cv2.line(corner2, (vertical_lines2[0][0], vertical_lines2[0][1]), (vertical_lines2[0][2], vertical_lines2[0][3]), color=(0,255,0), thickness=1)
+
+cv2.line(otsu2, (horizontal_lines2[0][0], horizontal_lines2[0][1]), (horizontal_lines2[0][2], horizontal_lines2[0][3]), (255,0,0), 1)
+cv2.line(otsu2, (vertical_lines2[0][0], vertical_lines2[0][1]), (vertical_lines2[0][2], vertical_lines2[0][3]), (255,0,0), 1)
+
+lines = cv2.HoughLines(otsu3, rho=1, theta=np.pi/180, threshold=10) 
+
+horizontal_lines3 = []
+vertical_lines3 = []
+for i in range(lines.shape[0]):
+    rho = lines[i][0][0]
+    theta = lines[i][0][1]
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    x1 = int(x0 + 5000 * (-b)) + 2
+    y1 = int(y0 + 5000 * a) - 2
+    x2 = int(x0 - 5000 * (-b)) + 2
+    y2 = int(y0 - 5000 * a) - 2
+    #print(theta)
+    if theta <= 0.1:
+        vertical_lines3.append([x1, y1, x2, y2, rho])
+    if theta >= 1.5 and theta <= 1.72:
+        horizontal_lines3.append([x1, y1, x2, y2, rho])
+        
+horizontal_lines3.sort(key=lambda x: x[-1])
+horizontal_lines3 = horizontal_lines3[:1]
+vertical_lines3.sort(key=lambda x: x[-1])
+vertical_lines3 = vertical_lines3[-1:]
+#print("horizontal : ", horizontal_lines3[0])
+#print("vertical : ", vertical_lines3[0])
+
+cv2.line(corner3, (horizontal_lines3[0][0], horizontal_lines3[0][1]), (horizontal_lines3[0][2], horizontal_lines3[0][3]), color=(0,255,0), thickness=1)
+cv2.line(corner3, (vertical_lines3[0][0], vertical_lines3[0][1]), (vertical_lines3[0][2], vertical_lines3[0][3]), color=(0,255,0), thickness=1)
+
+cv2.line(otsu3, (horizontal_lines3[0][0], horizontal_lines3[0][1]), (horizontal_lines3[0][2], horizontal_lines3[0][3]), (255,0,0), 1)
+cv2.line(otsu3, (vertical_lines3[0][0], vertical_lines3[0][1]), (vertical_lines3[0][2], vertical_lines3[0][3]), (255,0,0), 1)
+
+lines = cv2.HoughLines(otsu4, rho=1, theta=np.pi/180, threshold=10) 
+
+horizontal_lines4 = []
+vertical_lines4 = []
+for i in range(lines.shape[0]):
+    rho = lines[i][0][0]
+    theta = lines[i][0][1]
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    x1 = int(x0 + 5000 * (-b)) - 2
+    y1 = int(y0 + 5000 * a) - 2
+    x2 = int(x0 - 5000 * (-b)) - 2
+    y2 = int(y0 - 5000 * a) - 2
+    #print(theta)
+    if theta <= 0.1:
+        vertical_lines4.append([x1, y1, x2, y2, rho])
+    if theta >= 1.5 and theta <= 1.72:
+        horizontal_lines4.append([x1, y1, x2, y2, rho])
+        
+horizontal_lines4.sort(key=lambda x: x[-1])
+horizontal_lines4 = horizontal_lines4[-1:]
+vertical_lines4.sort(key=lambda x: x[-1])
+vertical_lines4 = vertical_lines4[-1:]
+#print("horizontal : ", horizontal_lines4[0])
+#print("vertical : ", vertical_lines4[0])
+
+cv2.line(corner4, (horizontal_lines4[0][0], horizontal_lines4[0][1]), (horizontal_lines4[0][2], horizontal_lines4[0][3]), color=(0,255,0), thickness=1)
+cv2.line(corner4, (vertical_lines4[0][0], vertical_lines4[0][1]), (vertical_lines4[0][2], vertical_lines4[0][3]), color=(0,255,0), thickness=1)
+
+cv2.line(otsu4, (horizontal_lines4[0][0], horizontal_lines4[0][1]), (horizontal_lines4[0][2], horizontal_lines4[0][3]), (255,0,0), 1)
+cv2.line(otsu4, (vertical_lines4[0][0], vertical_lines4[0][1]), (vertical_lines4[0][2], vertical_lines4[0][3]), (255,0,0), 1)
+   
 
 cv2.imshow("corner1", corner1)
 cv2.imshow("corner2", corner2)
 cv2.imshow("corner3", corner3)
 cv2.imshow("corner4", corner4)
+cv2.imshow("otsu corner1: " , otsu1)
+cv2.imshow("otsu corner2: " , otsu2)
+cv2.imshow("otsu corner3: " , otsu3)
+cv2.imshow("otsu corner4: " , otsu4)
+
+'''
+cv2.imshow("corner4", corner4)
 
 cv2.imshow("otsu corner1: " , otsu1)
-cv2.imshow("otsu corner2 otsu: " , otsu2)
-cv2.imshow("otsu corner3 otsu: " , otsu3)
-cv2.imshow("otsu corner4 otsu: " , otsu4)
-
-
+cv2.imshow("otsu corner2: " , otsu2)
+cv2.imshow("otsu corner3: " , otsu3)
+cv2.imshow("otsu corner4: " , otsu4)
 cv2.imshow("pixels1", otsu1)
 cv2.imshow("Corners", stack)
 cv2.imshow("Otsu Corners", stackOtsu)
-
 '''
+
 cv2.waitKey(0)
