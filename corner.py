@@ -231,12 +231,6 @@ print("Bottom Right Corner:\t", "Average: ", str("{:.2f}".format(np.mean(cornerP
 #print("Standard Deviation: " + str(np.std(cornerPixels4)))
 #print("Variance: " + str(np.var(cornerPixels4)))
 '''
-lines = cv2.HoughLines(corner1, 1, math.pi/2, 2, None, 30, 1);
-for line in lines:
-    pt1 = (line[0],line[1])
-    pt2 = (line[2],line[3])
-    cv2.line(img, pt1, pt2, (0,0,255), 3)
-'''
 
 lines = cv2.HoughLines(otsu1, rho=1, theta=np.pi/180, threshold=10) 
 
@@ -374,7 +368,7 @@ cv2.line(corner4, (vertical_lines4[0][0], vertical_lines4[0][1]), (vertical_line
 
 cv2.line(otsu4, (horizontal_lines4[0][0], horizontal_lines4[0][1]), (horizontal_lines4[0][2], horizontal_lines4[0][3]), (255,0,0), 1)
 cv2.line(otsu4, (vertical_lines4[0][0], vertical_lines4[0][1]), (vertical_lines4[0][2], vertical_lines4[0][3]), (255,0,0), 1)
-   
+
 
 cv2.imshow("corner1", corner1)
 cv2.imshow("corner2", corner2)
@@ -385,7 +379,7 @@ cv2.imshow("otsu corner2: " , otsu2)
 cv2.imshow("otsu corner3: " , otsu3)
 cv2.imshow("otsu corner4: " , otsu4)
 
-'''
+
 cv2.imshow("corner4", corner4)
 
 cv2.imshow("otsu corner1: " , otsu1)
@@ -395,6 +389,7 @@ cv2.imshow("otsu corner4: " , otsu4)
 cv2.imshow("pixels1", otsu1)
 cv2.imshow("Corners", stack)
 cv2.imshow("Otsu Corners", stackOtsu)
-'''
+
 
 cv2.waitKey(0)
+'''
