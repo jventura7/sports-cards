@@ -56,41 +56,76 @@ def detectCardBorders(horizontal, vertical, img):
     # while currentPos >= 0:
     return None, None
 
+def detectVerticalLines(new_img,test_threshold):
+    img = cv2.imread(new_img, 0)
+    black_img = np.zeros(img.shape)
+    median = np.median(img)
+    edges = cv2.Canny(img, 2*median, 2.5*median)
+    cv2.imshow('canny', edges)
+    lines = cv2.HoughLines(edges, rho=1, theta=np.pi/180, threshold = test_threshold)
+    N = lines.shape[0]
+    vertical_lines = []
+    row1, col1 = img.shape
+    # fig1, ax1 = plt.subplots()
+    # ax1.imshow(img, cmap=cm.gray)
+    for i in range(N):
+        rho = lines[i][0][0]
+        theta = lines[i][0][1]
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a * rho
+        y0 = b * rho
+        x1 = int(x0 + 5000 * (-b))
+        y1 = int(y0 + 5000 * a)
+        x2 = int(x0 - 5000 * (-b))
+        y2 = int(y0 - 5000 * a)
+        if x1 == x2 or abs(x1 - x2) <= 20:
+            vertical_lines.append(lines[i])
+    return vertical_lines, img, row1, col1
 
-new_img = "slab3.jpg"
-img = cv2.imread(new_img, 0)
-black_img = np.zeros(img.shape)
-median = np.median(img)
-edges = cv2.Canny(img, 2*median, 2.5*median)
-cv2.imshow('canny', edges)
-lines = cv2.HoughLines(edges, rho=1, theta=np.pi/180, threshold=270)
-N = lines.shape[0]
+def detectHorizontalLines(new_img,test_threshold):
+    img = cv2.imread(new_img, 0)
+    black_img = np.zeros(img.shape)
+    median = np.median(img)
+    edges = cv2.Canny(img, 2*median, 2.5*median)
+    cv2.imshow('canny', edges)
+    lines = cv2.HoughLines(edges, rho=1, theta=np.pi/180, threshold = test_threshold)
+    N = lines.shape[0]
 
-horizontal_lines = []
-vertical_lines = []
-row1, col1 = img.shape
-# fig1, ax1 = plt.subplots()
-# ax1.imshow(img, cmap=cm.gray)
-for i in range(N):
-    rho = lines[i][0][0]
-    theta = lines[i][0][1]
-    a = np.cos(theta)
-    b = np.sin(theta)
-    x0 = a * rho
-    y0 = b * rho
-    x1 = int(x0 + 5000 * (-b))
-    y1 = int(y0 + 5000 * a)
-    x2 = int(x0 - 5000 * (-b))
-    y2 = int(y0 - 5000 * a)
-    if y1 == y2 or abs(y1 - y2) <= 20:
-        horizontal_lines.append(lines[i])
-    if x1 == x2 or abs(x1 - x2) <= 20:
-        vertical_lines.append(lines[i])
-    # ax1.plot((x1, x2), (y1, y2), 'red')
-# row1, col1 = img.shape
-# ax1.axis((0, col1, row1, 0))
-# ax1.set_title('Detected Lines')
-# ax1.set_axis_off()
+    horizontal_lines = []
+    row1, col1 = img.shape
+    # fig1, ax1 = plt.subplots()
+    # ax1.imshow(img, cmap=cm.gray)
+    for i in range(N):
+        rho = lines[i][0][0]
+        theta = lines[i][0][1]
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a * rho
+        y0 = b * rho
+        x1 = int(x0 + 5000 * (-b))
+        y1 = int(y0 + 5000 * a)
+        x2 = int(x0 - 5000 * (-b))
+        y2 = int(y0 - 5000 * a)
+        if y1 == y2 or abs(y1 - y2) <= 20:
+            horizontal_lines.append(lines[i])
+    return horizontal_lines, img, row1, col1
+    
+new_img = "psa9_183.jpg"
+horizontalThreshold = 250
+verticalThreshold = 400
+horizontal_lines, img, row1, col1 = detectHorizontalLines(new_img, horizontalThreshold)
+vertical_lines, img, row1, col1 = detectVerticalLines(new_img, verticalThreshold)
+
+while len(horizontal_lines) < 3:
+    horizontal_lines = horizontal_lines - 10
+    horizontal_lines, img, row1, col1 = detectHorizontalLines(new_img, horizontalThreshold)
+print(horizontalThreshold)
+
+while len(vertical_lines) < 3:
+    vertical_lines = vertical_lines - 10
+    vertical_lines, img, row1, col1 = detectVerticalLines(new_img, verticalThreshold)
+print(verticalThreshold)
 
 vertical_margins, horizontal_margins = detectCardBorders(horizontal_lines, vertical_lines, img)
 
@@ -100,18 +135,17 @@ vertical_lines = vertical_lines[:2] + vertical_lines[-2:]
 #print(vertical_lines)
 length_bottom = vertical_lines[1][0][0] - vertical_lines[0][0][0]
 length_top = vertical_lines[3][0][0] - vertical_lines[2][0][0]
-#print("Left:", length_bottom, "Right:", length_top)
-#print("Left to Right Ratio ", int(round((length_bottom / (length_bottom + length_top))*100)), ":", int(round((length_top / (length_top + length_bottom))*100)))
+print("Left:", length_bottom, "Right:", length_top)
+print("Left to Right Ratio ", int(round((length_bottom / (length_bottom + length_top))*100)), ":", int(round((length_top / (length_top + length_bottom))*100)))
 
 horizontal_lines.sort(key=lambda x: x[0][0])
 horizontal_lines = horizontal_lines[:2] + horizontal_lines[-2:]
-#print(horizontal_lines)
 length_left = horizontal_lines[1][0][0] - horizontal_lines[0][0][0]
 length_right = horizontal_lines[3][0][0] - horizontal_lines[2][0][0]
-#print("Bottom:", length_right, "Top: ", length_left)
-#print("Bottom to Top Ratio ", int(round((length_left / (length_left + length_right))*100)), ":", int(round((length_right / (length_left + length_right))*100)))
+print("Bottom:", length_right, "Top: ", length_left)
+print("Bottom to Top Ratio ", int(round((length_left / (length_left + length_right))*100)), ":", int(round((length_right / (length_left + length_right))*100)))
 
-"""
+
 borders = horizontal_lines + vertical_lines
 fig2, ax2 = plt.subplots()
 ax2.imshow(img, cmap=cm.gray)
@@ -131,7 +165,7 @@ for line in borders:
 ax2.axis((0, col1, row1, 0))
 ax2.set_title('Corner Detection')
 ax2.set_axis_off()
-"""
+
 #fig2.savefig('houghlines.png')
 
 left_x = (vertical_lines[0][0][0] + vertical_lines[1][0][0]) // 2
