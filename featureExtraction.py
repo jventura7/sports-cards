@@ -10,6 +10,9 @@ import csv
 import os
 from os.path import exists
 
+import hough_transform
+from hough_transform import *
+
 
 def find_grade(filename):
     split = filename.split("_", 1)[0]
@@ -50,8 +53,8 @@ with open(fileName, 'w', newline='') as f:
     # 2. Setup/initialize the .csv file with proper headings
     writer = csv.writer(f) # create the csv writer
 
-    headerRow = ['fileName', 'grade','Vertical MR', 'Horizontal MR', 'TL STD', 'TR STD',
-                 'BL STD', 'BR STD', 'TL BPC', 'TR BPC', 'BL BPC', 'BR BPC', 'LS MC', 'BS MC']
+    headerRow = ['fileName', 'grade', 'Vertical MR', 'Horizontal MR', 'TL STD', 'TR STD',
+                 'BL STD', 'BR STD', 'LS MC', 'BS MC']
 
     writer.writerow(headerRow)
 
@@ -60,10 +63,16 @@ with open(fileName, 'w', newline='') as f:
         filePath = os.path.join(picDir, file)
 
         if os.path.isfile(filePath):  # checking to make sure it is a file
-            img = cv2.imread(filePath)
+            img = cv2.imread(filePath, 0)
+
+
             name = file
+            print("name:", name)
             grade = find_grade(name)
-            row = [name, grade]
+
+            verticalRatio, horizontalRatio, c1, c2, c3, c4 = hough_transform.test(img)
+
+            row = [name, grade, verticalRatio, horizontalRatio, c1, c2, c3, c4]
             writer.writerow(row)
 
 
