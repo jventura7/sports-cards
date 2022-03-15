@@ -52,7 +52,7 @@ def detectVerticalLines(img, test_threshold):
 def detectHorizontalLines(img, test_threshold):
     median = np.median(img)
     edges = cv2.Canny(img, 3 * median, 3.5 * median)
-    cv2.imshow('canny', edges)
+    #cv2.imshow('canny', edges)
     lines = cv2.HoughLines(edges, rho=1, theta=np.pi / 180, threshold=test_threshold)
     N = lines.shape[0]
 
@@ -63,6 +63,7 @@ def detectHorizontalLines(img, test_threshold):
     strongest = 0
     horizontal_lines = []
     row1, col1 = img.shape
+    dontInclude = False
     for i in range(N):
         rho = lines[i][0][0]
         theta = lines[i][0][1]
@@ -142,6 +143,8 @@ def detectFinalMargins(img, vertical_lines, horizontal_lines):
     print("Left to Right Ratio ", int(round((length_bottom / (length_bottom + length_top)) * 100)), ":",
           int(round((length_top / (length_top + length_bottom)) * 100)))
 
+    horizontalRatio = int(round((length_bottom / (length_bottom + length_top)) * 100))
+
     horizontal_lines.sort(key=lambda x: x[0][0])
     horizontal_lines = horizontal_lines[:2] + horizontal_lines[-2:]
     length_left = horizontal_lines[1][0][0] - horizontal_lines[0][0][0]
@@ -149,6 +152,8 @@ def detectFinalMargins(img, vertical_lines, horizontal_lines):
     print("Bottom:", length_right, "Top: ", length_left)
     print("Bottom to Top Ratio ", int(round((length_left / (length_left + length_right)) * 100)), ":",
           int(round((length_right / (length_left + length_right)) * 100)))
+
+    verticalRatio = int(round((length_left / (length_left + length_right)) * 100))
 
     borders = horizontal_lines + vertical_lines
     fig2, ax2 = plt.subplots()
@@ -166,12 +171,13 @@ def detectFinalMargins(img, vertical_lines, horizontal_lines):
         y2 = int(y0 - 5000 * a)
         for border in borders:
             ax2.plot((x1, x2), (y1, y2), 'red', linewidth=0)
+    col1, row1 = img.shape
     ax2.axis((0, col1, row1, 0))
     ax2.set_title('Corner Detection')
     ax2.set_axis_off()
-    return vertical_lines, horizontal_lines, ax2
+    return vertical_lines, horizontal_lines, ax2, horizontalRatio, verticalRatio
 
-def detectCorners(vertical_lines, horizontal_lines, ax2):
+def detectCorners(img, vertical_lines, horizontal_lines, ax2):
     left_x = (vertical_lines[0][0][0] + vertical_lines[1][0][0]) // 2
     right_x = (vertical_lines[2][0][0] + vertical_lines[3][0][0]) // 2
 
@@ -192,6 +198,7 @@ def detectCorners(vertical_lines, horizontal_lines, ax2):
         patches.Rectangle((right_x, bottom_y), vertical_lines[3][0][0] - right_x, horizontal_lines[3][0][0] - bottom_y,
                           linewidth=1, edgecolor='r', facecolor='none'))
     plt.show()
+
 
     corner1 = img[int(horizontal_lines[0][0][0]):int(top_y), int(vertical_lines[0][0][0]):int(left_x)]
     corner2 = img[int(bottom_y):int(horizontal_lines[3][0][0]), int(vertical_lines[0][0][0]):int(left_x)]
@@ -245,6 +252,7 @@ def detectCorners(vertical_lines, horizontal_lines, ax2):
     cornerPixels = [cornerPixels1, cornerPixels2, cornerPixels3, cornerPixels4]
 
     printCorners(corners, cornerPixels)
+    return "{:.2f}".format(np.std(cornerPixels1)), "{:.2f}".format(np.std(cornerPixels2)), "{:.2f}".format(np.std(cornerPixels3)), "{:.2f}".format(np.std(cornerPixels4))
 
 def printCorners(corners, pixels):
     corner1, corner2, corner3, corner4 = corners
@@ -275,17 +283,19 @@ def printCorners(corners, pixels):
 
 
 # Import image
-img = "no_slab2.jpg"
-img = cv2.imread(img, 0)
-img = cv2.resize(img, (280, 390))
+def test(img):
+    #img = "no_slab2.jpg"
+    #img = cv2.imread(img, 0)
+    img = cv2.resize(img, (280, 390))
 
-horizontalThreshold = 100
-verticalThreshold = 100
-horizontal_lines, _, row1, col1 = detectHorizontalLines(img, horizontalThreshold)
-vertical_lines, _, row1, col1 = detectVerticalLines(img, verticalThreshold)
-vertical, horizontal, ax2 = detectFinalMargins(img, vertical_lines, horizontal_lines)
+    horizontalThreshold = 40
+    verticalThreshold = 40
+    horizontal_lines, _, row1, col1 = detectHorizontalLines(img, horizontalThreshold)
+    vertical_lines, _, row1, col1 = detectVerticalLines(img, verticalThreshold)
+    vertical, horizontal, ax2, verticalRatio, horizontalRatio = detectFinalMargins(img, vertical_lines, horizontal_lines)
 
-displayVerticalLines(img, vertical_lines)
-displayHorizontalLines(img, horizontal_lines)
-detectCorners(vertical, horizontal, ax2)
-cv2.waitKey(0)
+    displayVerticalLines(img, vertical_lines)
+    displayHorizontalLines(img, horizontal_lines)
+    c1, c2, c3, c4 = detectCorners(img, vertical, horizontal, ax2)
+    cv2.waitKey(0)
+    return verticalRatio, horizontalRatio, c1, c2, c3, c4
