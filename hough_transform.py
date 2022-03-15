@@ -171,7 +171,7 @@ def detectFinalMargins(img, vertical_lines, horizontal_lines):
         y2 = int(y0 - 5000 * a)
         for border in borders:
             ax2.plot((x1, x2), (y1, y2), 'red', linewidth=0)
-    col1, row1 = img.shape
+    row1, col1 = img.shape
     ax2.axis((0, col1, row1, 0))
     ax2.set_title('Corner Detection')
     ax2.set_axis_off()
