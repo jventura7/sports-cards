@@ -3,17 +3,20 @@ import numpy as np
 from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from PIL import Image
-import math
 
-def detectVerticalLines(new_img, test_threshold):
-    img = cv2.imread(new_img, 0)
+def detectVerticalLines(img, test_threshold):
     median = np.median(img)
     edges = cv2.Canny(img, 2 * median, 2.5 * median)
     cv2.imshow('canny', edges)
     lines = cv2.HoughLines(edges, rho=1, theta=np.pi / 180, threshold=test_threshold)
     N = lines.shape[0]
 
+    # marks x positions of vertical lines
+    seen = set()
+    rightTwo = set()
+    leftTwo = set()
+    strongest = 0
+    dontInclude = False
     vertical_lines = []
     row1, col1 = img.shape
     for i in range(N):
@@ -25,17 +28,39 @@ def detectVerticalLines(new_img, test_threshold):
         x1 = int(x0 + 5000 * (-b))
         x2 = int(x0 - 5000 * (-b))
         if x1 == x2 or abs(x1 - x2) <= 20:
-            vertical_lines.append(lines[i])
+            for x in seen:
+                if abs(x - x1) < 5:
+                    dontInclude = True
+            if (len(leftTwo) == 2 and x1 < 50) or (len(rightTwo) == 2 and x1 > 200):
+                dontInclude = True
+
+            if not dontInclude:
+                strongest += 1
+                vertical_lines.append(lines[i])
+                seen.add(x1)
+                if x1 < 50:
+                    leftTwo.add(x1)
+                if x1 > 200:
+                    rightTwo.add(x1)
+
+            if strongest == 4:
+                break
+        dontInclude = False
+
     return vertical_lines, img, row1, col1
 
-def detectHorizontalLines(new_img, test_threshold):
-    img = cv2.imread(new_img, 0)
+def detectHorizontalLines(img, test_threshold):
     median = np.median(img)
-    edges = cv2.Canny(img, 2 * median, 2.5 * median)
+    edges = cv2.Canny(img, 3 * median, 3.5 * median)
     cv2.imshow('canny', edges)
     lines = cv2.HoughLines(edges, rho=1, theta=np.pi / 180, threshold=test_threshold)
     N = lines.shape[0]
 
+    # mark y positions of horizontal lines
+    seen = set()
+    bottomTwo = set()
+    topTwo = set()
+    strongest = 0
     horizontal_lines = []
     row1, col1 = img.shape
     for i in range(N):
@@ -47,10 +72,67 @@ def detectHorizontalLines(new_img, test_threshold):
         y1 = int(y0 + 5000 * a)
         y2 = int(y0 - 5000 * a)
         if y1 == y2 or abs(y1 - y2) <= 20:
-            horizontal_lines.append(lines[i])
+            for y in seen:
+                if abs(y - y1) < 5:
+                    dontInclude = True
+            if (len(bottomTwo) == 2 and y1 > 300) or (len(topTwo) == 2 and y1 < 100):
+                dontInclude = True
+
+            if not dontInclude:
+                strongest += 1
+                horizontal_lines.append(lines[i])
+                seen.add(y1)
+                if y1 > 300:
+                    bottomTwo.add(y1)
+                if y1 < 100:
+                    topTwo.add(y1)
+            if strongest == 4:
+                break
+        dontInclude = False
+
     return horizontal_lines, img, row1, col1
 
-def detectFinalMargins(vertical_lines, horizontal_lines):
+def displayHorizontalLines(img, horizontal):
+    fig2, ax2 = plt.subplots()
+    ax2.imshow(img, cmap=cm.gray)
+    for line in horizontal:
+        rho = line[0][0]
+        theta = line[0][1]
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a * rho
+        y0 = b * rho
+        x1 = int(x0 + 5000 * (-b))
+        y1 = int(y0 + 5000 * a)
+        x2 = int(x0 - 5000 * (-b))
+        y2 = int(y0 - 5000 * a)
+        ax2.plot((x1, x2), (y1, y2), 'red')
+
+    rows, cols = img.shape
+    ax2.axis((0, cols, rows, 0))
+    ax2.set_title('Detected Horizontal Lines')
+
+def displayVerticalLines(img, vertical):
+    fig3, ax3 = plt.subplots()
+    ax3.imshow(img, cmap=cm.gray)
+    for line in vertical:
+        rho = line[0][0]
+        theta = line[0][1]
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a * rho
+        y0 = b * rho
+        x1 = int(x0 + 5000 * (-b))
+        y1 = int(y0 + 5000 * a)
+        x2 = int(x0 - 5000 * (-b))
+        y2 = int(y0 - 5000 * a)
+        ax3.plot((x1, x2), (y1, y2), 'red')
+
+    rows, cols = img.shape
+    ax3.axis((0, cols, rows, 0))
+    ax3.set_title('Detected Vertical Lines')
+
+def detectFinalMargins(img, vertical_lines, horizontal_lines):
     vertical_lines.sort(key=lambda x: x[0][0])
     vertical_lines = vertical_lines[:2] + vertical_lines[-2:]
 
@@ -193,11 +275,17 @@ def printCorners(corners, pixels):
 
 
 # Import image
-img = "no_slab.jpg"
-horizontalThreshold = 150
-verticalThreshold = 200
-horizontal_lines, img, row1, col1 = detectHorizontalLines(img, horizontalThreshold)
-vertical_lines, img, row1, col1 = detectVerticalLines(img, verticalThreshold)
-vertical, horizontal, ax2 = detectFinalMargins(vertical_lines, horizontal_lines)
+img = "no_slab2.jpg"
+img = cv2.imread(img, 0)
+img = cv2.resize(img, (280, 390))
+
+horizontalThreshold = 100
+verticalThreshold = 100
+horizontal_lines, _, row1, col1 = detectHorizontalLines(img, horizontalThreshold)
+vertical_lines, _, row1, col1 = detectVerticalLines(img, verticalThreshold)
+vertical, horizontal, ax2 = detectFinalMargins(img, vertical_lines, horizontal_lines)
+
+displayVerticalLines(img, vertical_lines)
+displayHorizontalLines(img, horizontal_lines)
 detectCorners(vertical, horizontal, ax2)
 cv2.waitKey(0)
