@@ -52,7 +52,7 @@ def detectVerticalLines(img, test_threshold):
 
 def detectHorizontalLines(img, test_threshold):
     median = np.median(img)
-    edges = cv2.Canny(img, 3 * median, 3.5 * median)
+    edges = cv2.Canny(img, 2 * median, 2.5 * median)
     #cv2.imshow('canny', edges)
     lines = cv2.HoughLines(edges, rho=1, theta=np.pi / 180, threshold=test_threshold)
     N = lines.shape[0]
@@ -77,16 +77,16 @@ def detectHorizontalLines(img, test_threshold):
             for y in seen:
                 if abs(y - y1) < 5:
                     dontInclude = True
-            if (len(bottomTwo) == 2 and y1 > 300) or (len(topTwo) == 2 and y1 < 100):
+            if (len(bottomTwo) == 2 and y1 > 200) or (len(topTwo) == 2 and y1 < 200):
                 dontInclude = True
 
             if not dontInclude:
                 strongest += 1
                 horizontal_lines.append(lines[i])
                 seen.add(y1)
-                if y1 > 300:
+                if y1 > 200:
                     bottomTwo.add(y1)
-                if y1 < 100:
+                if y1 < 200:
                     topTwo.add(y1)
             if strongest == 4:
                 break
@@ -136,7 +136,7 @@ def displayVerticalLines(img, vertical):
             rotation = math.degrees(abs(inner - outer))
         ax3.plot((x1, x2), (y1, y2), 'red')
         i += 1
-    print("The rotation within the card is " + str(rotation) + "degrees.")
+    print("The rotation within the card is " + str(rotation) + " degrees.")
     rows, cols = img.shape
     ax3.axis((0, cols, rows, 0))
     ax3.set_title('Detected Vertical Lines')
@@ -293,7 +293,7 @@ def printCorners(corners, pixels):
 
 # Import image
 def test(img):
-    #img = "no_slab2.jpg"
+    #img = "no_slab.jpg"
     #img = cv2.imread(img, 0)
     img = cv2.resize(img, (280, 390))
 
