@@ -133,7 +133,7 @@ def displayVerticalLines(img, vertical):
             outer = math.atan2(abs(x2 - x1), abs(y2 - y1))
         elif i == 1:
             inner = math.atan2(abs(x2 - x1), abs(y2 - y1))
-            rotation = math.degrees(inner - outer)
+            rotation = math.degrees(abs(inner - outer))
         ax3.plot((x1, x2), (y1, y2), 'red')
         i += 1
     print("The rotation within the card is " + str(rotation) + "degrees.")
