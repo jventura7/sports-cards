@@ -54,7 +54,7 @@ with open(fileName, 'w', newline='') as f:
     writer = csv.writer(f) # create the csv writer
 
     headerRow = ['fileName', 'grade', 'Vertical MR', 'Horizontal MR', 'TL STD', 'TR STD',
-                 'BL STD', 'BR STD', 'LS MC', 'BS MC']
+                 'BL STD', 'BR STD', 'Rotation']
 
     writer.writerow(headerRow)
 
@@ -70,9 +70,9 @@ with open(fileName, 'w', newline='') as f:
             print("name:", name)
             grade = find_grade(name)
 
-            verticalRatio, horizontalRatio, c1, c2, c3, c4 = hough_transform.test(img)
+            verticalRatio, horizontalRatio, c1, c2, c3, c4, rotate = hough_transform.test(img)
 
-            row = [name, grade, verticalRatio, horizontalRatio, c1, c2, c3, c4]
+            row = [name, grade, verticalRatio, horizontalRatio, c1, c2, c3, c4, rotate]
             writer.writerow(row)
 
 
