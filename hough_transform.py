@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import math
 
 def detectVerticalLines(img, test_threshold):
     median = np.median(img)
@@ -113,6 +114,7 @@ def displayHorizontalLines(img, horizontal):
     ax2.set_title('Detected Horizontal Lines')
 
 def displayVerticalLines(img, vertical):
+    i, outer, rotation = 0, 0, 0
     fig3, ax3 = plt.subplots()
     ax3.imshow(img, cmap=cm.gray)
     for line in vertical:
@@ -126,8 +128,14 @@ def displayVerticalLines(img, vertical):
         y1 = int(y0 + 5000 * a)
         x2 = int(x0 - 5000 * (-b))
         y2 = int(y0 - 5000 * a)
+        if i == 0:
+            outer = math.atan2(abs(y2 - y1), abs(x2 - x1))
+        elif i == 1:
+            inner = math.atan2(abs(y2 - y1), abs(x2 - x1))
+            rotation = math.degrees(abs(inner - outer))
         ax3.plot((x1, x2), (y1, y2), 'red')
-
+        i += 1
+    print("The rotation within the card is " + str(rotation) + " degree")
     rows, cols = img.shape
     ax3.axis((0, cols, rows, 0))
     ax3.set_title('Detected Vertical Lines')
@@ -275,7 +283,7 @@ def printCorners(corners, pixels):
 
 
 # Import image
-img = "no_slab2.jpg"
+img = "no_slab.jpg"
 img = cv2.imread(img, 0)
 img = cv2.resize(img, (280, 390))
 
@@ -284,6 +292,7 @@ verticalThreshold = 100
 horizontal_lines, _, row1, col1 = detectHorizontalLines(img, horizontalThreshold)
 vertical_lines, _, row1, col1 = detectVerticalLines(img, verticalThreshold)
 vertical, horizontal, ax2 = detectFinalMargins(img, vertical_lines, horizontal_lines)
+print(vertical_lines)
 
 displayVerticalLines(img, vertical_lines)
 displayHorizontalLines(img, horizontal_lines)
