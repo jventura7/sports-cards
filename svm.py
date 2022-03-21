@@ -1,8 +1,9 @@
 from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC
+from sklearn.svm import SVR
 import pandas 
 from sklearn.metrics import confusion_matrix
 import hough_transform
+import cv2
 
 def splitCard(file):
     features = pandas.read_csv(file)
@@ -13,28 +14,29 @@ def splitCard(file):
 
 def datasetSVM(file):
     x_train, x_test, y_train, y_test = splitCard(file)
-    classifier = SVC()
+    classifier = SVR()
     classifier.fit(x_train, y_train)
-    print(x_test)
     prediction = classifier.predict(x_test)
-    print(y_test.shape)
-    print(prediction.shape)
+    y_test = y_test.tolist()
+    print(y_test)
+    print(prediction)
     count = 0
-    for i in prediction:
-        for j in y_test:
-            if i == j:
-                count += 1
-    accuracy = float(count/len(y_test))
+    for i in range(len(prediction)):
+        if prediction[i] < y_test[i] + 1 and prediction[i] > y_test[i] - 1:
+            count += 1
+    accuracy = float(count)/len(y_test)
+    print(count)
     print("\nAccuracy: ", accuracy)
 
 def predictCard(card, data):
     features = pandas.read_csv(data)
     y = features['grade']
     x = features.drop(['fileName', 'grade'], 1)
-    classifier = SVC()
+    classifier = SVR()
     classifier.fit(x, y)
-    verticalRatio, horizontalRatio, c1, c2, c3, c4 = hough_transform.test(card)
-    input = [[verticalRatio, horizontalRatio, c1, c2, c3, c4]]
+    img = cv2.imread(card, 0)
+    verticalRatio, horizontalRatio, c1, c2, c3, c4, rotate = hough_transform.test(img)
+    input = [[verticalRatio, horizontalRatio, c1, c2, c3, c4, rotate]]
     #input.reshape(1,-1)
     prediction = classifier.predict(input)
     split = card.split("_", 1)[0]
@@ -42,5 +44,5 @@ def predictCard(card, data):
     print("Prediction: ", prediction)
     print("Original:", grade)
 
-#datasetSVM("test.csv")
-predictCard("psa9_10.jpg", "test.csv")
+datasetSVM("test.csv")
+#predictCard("psa8_10.jpg", "test.csv")
