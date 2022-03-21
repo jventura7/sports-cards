@@ -64,16 +64,17 @@ with open(fileName, 'w', newline='') as f:
 
         if os.path.isfile(filePath):  # checking to make sure it is a file
             img = cv2.imread(filePath, 0)
+            if img is not None:
 
 
-            name = file
-            print("name:", name)
-            grade = find_grade(name)
+                name = file
+                print("name:", name)
+                grade = find_grade(name)
 
-            verticalRatio, horizontalRatio, c1, c2, c3, c4, rotate = hough_transform.test(img)
-
-            row = [name, grade, verticalRatio, horizontalRatio, c1, c2, c3, c4, rotate]
-            writer.writerow(row)
+                verticalRatio, horizontalRatio, c1, c2, c3, c4, rotate = hough_transform.test(img)
+                if verticalRatio != None:
+                    row = [name, grade, verticalRatio, horizontalRatio, c1, c2, c3, c4, rotate]
+                    writer.writerow(row)
 
 
             # cv2.imshow(file, img)
