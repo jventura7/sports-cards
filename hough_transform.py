@@ -7,7 +7,7 @@ import math
 
 def detectVerticalLines(img, test_threshold):
     median = np.median(img)
-    edges = cv2.Canny(img, 2 * median, 2.5 * median)
+    edges = cv2.Canny(img, 0.65 * median, 0.8 * median)
     cv2.imshow('canny', edges)
     lines = cv2.HoughLines(edges, rho=1, theta=np.pi / 180, threshold=test_threshold)
     N = lines.shape[0]
@@ -28,20 +28,22 @@ def detectVerticalLines(img, test_threshold):
         x0 = a * rho
         x1 = int(x0 + 5000 * (-b))
         x2 = int(x0 - 5000 * (-b))
-        if x1 == x2 or abs(x1 - x2) <= 20:
+        if x1 == x2 or abs(x1 - x2) <= 160:
             for x in seen:
-                if abs(x - x1) < 5:
+                if abs(x - x1) < 40:
                     dontInclude = True
-            if (len(leftTwo) == 2 and x1 < 50) or (len(rightTwo) == 2 and x1 > 200):
+            if (len(leftTwo) == 2 and x1 < 400) or (len(rightTwo) == 2 and x1 > 1600):
+                dontInclude = True
+            if 1600 > x1 > 400:
                 dontInclude = True
 
             if not dontInclude:
                 strongest += 1
                 vertical_lines.append(lines[i])
                 seen.add(x1)
-                if x1 < 50:
+                if x1 < 400:
                     leftTwo.add(x1)
-                if x1 > 200:
+                if x1 > 1600:
                     rightTwo.add(x1)
 
             if strongest == 4:
@@ -52,8 +54,8 @@ def detectVerticalLines(img, test_threshold):
 
 def detectHorizontalLines(img, test_threshold):
     median = np.median(img)
-    edges = cv2.Canny(img, 2 * median, 2.5 * median)
-    #cv2.imshow('canny', edges)
+    edges = cv2.Canny(img, 0.65 * median, 0.8 * median)
+    cv2.imshow('canny hor', edges)
     lines = cv2.HoughLines(edges, rho=1, theta=np.pi / 180, threshold=test_threshold)
     N = lines.shape[0]
 
@@ -73,20 +75,22 @@ def detectHorizontalLines(img, test_threshold):
         y0 = b * rho
         y1 = int(y0 + 5000 * a)
         y2 = int(y0 - 5000 * a)
-        if y1 == y2 or abs(y1 - y2) <= 20:
+        if y1 == y2 or abs(y1 - y2) <= 160:
             for y in seen:
-                if abs(y - y1) < 5:
+                if abs(y - y1) < 40:
                     dontInclude = True
-            if (len(bottomTwo) == 2 and y1 > 200) or (len(topTwo) == 2 and y1 < 200):
+            if (len(bottomTwo) == 2 and y1 > 2400) or (len(topTwo) == 2 and y1 < 800):
+                dontInclude = True
+            if 2400 > y1 > 800:
                 dontInclude = True
 
             if not dontInclude:
                 strongest += 1
                 horizontal_lines.append(lines[i])
                 seen.add(y1)
-                if y1 > 200:
+                if y1 > 2400:
                     bottomTwo.add(y1)
-                if y1 < 200:
+                if y1 < 800:
                     topTwo.add(y1)
             if strongest == 4:
                 break
@@ -95,7 +99,6 @@ def detectHorizontalLines(img, test_threshold):
     return horizontal_lines, img, row1, col1
 
 def displayHorizontalLines(img, horizontal):
-    j, out, inside, rot = 0, 0, 0, 0
     fig2, ax2 = plt.subplots()
     ax2.imshow(img, cmap=cm.gray)
     for line in horizontal:
@@ -109,16 +112,8 @@ def displayHorizontalLines(img, horizontal):
         y1 = int(y0 + 5000 * a)
         x2 = int(x0 - 5000 * (-b))
         y2 = int(y0 - 5000 * a)
-        if j == 0:
-            out = math.atan2(abs(y2 - y1), abs(x2 - x1))
-            print(out)
-        elif j == 1:
-            inside = math.atan2(abs(y2 - y1), abs(x2 - x1))
-            print(inside)
-            rot = math.degrees(abs(inside - out))
         ax2.plot((x1, x2), (y1, y2), 'red')
-        j += 1
-    print("The h-rotation within the card is " + str(rot) + " degrees.")
+
     rows, cols = img.shape
     ax2.axis((0, cols, rows, 0))
     ax2.set_title('Detected Horizontal Lines')
@@ -140,21 +135,18 @@ def displayVerticalLines(img, vertical):
         y2 = int(y0 - 5000 * a)
         if i == 0:
             outer = math.atan2(abs(x2 - x1), abs(y2 - y1))
-            print(outer)
         elif i == 1:
             inner = math.atan2(abs(x2 - x1), abs(y2 - y1))
-            print(inner)
             rotation = math.degrees(abs(inner - outer))
         ax3.plot((x1, x2), (y1, y2), 'red')
         i += 1
-    print("The rotation within the card is " + str(rotation) + " degrees.")
+    print("The rotation within the card is " + str(rotation) + "degrees.")
     rows, cols = img.shape
     ax3.axis((0, cols, rows, 0))
     ax3.set_title('Detected Vertical Lines')
     return rotation
 
 def detectFinalMargins(img, vertical_lines, horizontal_lines):
-    vertical_lines.sort(key=lambda x: x[0][0])
     vertical_lines = vertical_lines[:2] + vertical_lines[-2:]
 
     length_bottom = vertical_lines[1][0][0] - vertical_lines[0][0][0]
@@ -165,7 +157,6 @@ def detectFinalMargins(img, vertical_lines, horizontal_lines):
 
     horizontalRatio = int(round((length_bottom / (length_bottom + length_top)) * 100))
 
-    horizontal_lines.sort(key=lambda x: x[0][0])
     horizontal_lines = horizontal_lines[:2] + horizontal_lines[-2:]
     length_left = horizontal_lines[1][0][0] - horizontal_lines[0][0][0]
     length_right = horizontal_lines[3][0][0] - horizontal_lines[2][0][0]
@@ -304,9 +295,8 @@ def printCorners(corners, pixels):
 
 # Import image
 def test(img):
-    #img = "psa.png"
     img = cv2.imread(img, 0)
-    img = cv2.resize(img, (280, 390))
+    img = cv2.resize(img, (2240, 3120))
 
     horizontalThreshold = 40
     verticalThreshold = 40
@@ -320,4 +310,9 @@ def test(img):
     cv2.waitKey(0)
     return verticalRatio, horizontalRatio, c1, c2, c3, c4, rotate
 
-test("psa4_98.png")
+# works well
+# test("psa10_152.jpg")
+test("psa5_126.png")
+# test("psa4_98.png")
+# does not
+# test("no_slab2.jpg")
